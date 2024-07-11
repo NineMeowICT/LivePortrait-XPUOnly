@@ -50,13 +50,8 @@ class Cropper(object):
     def __init__(self, **kwargs) -> None:
         self.crop_cfg: CropConfig = kwargs.get("crop_cfg", None)
         device_id = kwargs.get("device_id", 0)
-        flag_force_cpu = kwargs.get("flag_force_cpu", False)
-        if flag_force_cpu:
-            device = "cpu"
-            face_analysis_wrapper_provicer = ["CPUExecutionProvider"]
-        else:
-            device = "cuda"
-            face_analysis_wrapper_provicer = ["CUDAExecutionProvider"]
+        device = "xpu"
+        face_analysis_wrapper_provicer = ["OpenVINOExecutionProvider"]
         self.landmark_runner = LandmarkRunner(
             ckpt_path=make_abs_path(self.crop_cfg.landmark_ckpt_path),
             onnx_provider=device,
