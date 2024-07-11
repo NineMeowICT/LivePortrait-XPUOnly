@@ -7,6 +7,21 @@ from src.config.inference_config import InferenceConfig
 from src.config.crop_config import CropConfig
 from src.live_portrait_pipeline import LivePortraitPipeline
 
+import torch
+try:
+    import intel_extension_for_pytorch as ipex
+    if torch.xpu.is_available():
+        from ipex_to_cuda import ipex_init
+        ipex_active, message = ipex_init()
+        print(f"IPEX Active: {ipex_active} Message: {message}")
+except Exception:
+    pass
+
+if torch.cuda.is_available():
+    if hasattr(torch.cuda, "is_xpu_hijacked") and torch.cuda.is_xpu_hijacked:
+        print("IPEX to CUDA is working!")
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
 
 def partial_fields(target_class, kwargs):
     return target_class(**{k: v for k, v in kwargs.items() if hasattr(target_class, k)})
