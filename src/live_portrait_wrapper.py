@@ -24,10 +24,8 @@ class LivePortraitWrapper(object):
 
         self.inference_cfg = inference_cfg
         self.device_id = inference_cfg.device_id
-        if inference_cfg.flag_force_cpu:
-            self.device = 'cpu'
-        else:
-            self.device = 'cuda:' + str(self.device_id)
+
+        self.device = 'xpu:' + str(self.device_id)
 
         model_config = yaml.load(open(inference_cfg.models_config, 'r'), Loader=yaml.SafeLoader)
         # init F
@@ -49,8 +47,8 @@ class LivePortraitWrapper(object):
         else:
             self.stitching_retargeting_module = None
 
-        
-        
+
+
         self.timer = Timer()
 
     def update_config(self, user_args):

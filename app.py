@@ -4,6 +4,21 @@
 The entrance of the gradio
 """
 
+import torch
+try:
+    import intel_extension_for_pytorch as ipex
+    if torch.xpu.is_available():
+        from ipex_to_cuda import ipex_init
+        ipex_active, message = ipex_init()
+        print(f"IPEX Active: {ipex_active} Message: {message}")
+except Exception:
+    pass
+
+if torch.cuda.is_available():
+    if hasattr(torch.cuda, "is_xpu_hijacked") and torch.cuda.is_xpu_hijacked:
+        print("IPEX to CUDA is working!")
+
+
 import tyro
 import gradio as gr
 import os.path as osp

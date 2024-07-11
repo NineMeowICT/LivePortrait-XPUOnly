@@ -28,24 +28,18 @@ class LandmarkRunner(object):
 
     def __init__(self, **kwargs):
         ckpt_path = kwargs.get('ckpt_path')
-        onnx_provider = kwargs.get('onnx_provider', 'cuda')  # 默认用cuda
+        onnx_provider = kwargs.get('onnx_provider', 'openvino')  # 默认用openvino
         device_id = kwargs.get('device_id', 0)
         self.dsize = kwargs.get('dsize', 224)
         self.timer = Timer()
 
-        if onnx_provider.lower() == 'cuda':
+        if onnx_provider.lower() == 'openvino':
             self.session = onnxruntime.InferenceSession(
                 ckpt_path, providers=[
-                    ('CUDAExecutionProvider', {'device_id': device_id})
+                    ('OpenVINOExecutionProvider', {'device_id': device_id})
                 ]
             )
-        else:
-            opts = onnxruntime.SessionOptions()
-            opts.intra_op_num_threads = 4  # 默认线程数为 4
-            self.session = onnxruntime.InferenceSession(
-                ckpt_path, providers=['CPUExecutionProvider'],
-                sess_options=opts
-            )
+
 
     def _run(self, inp):
         out = self.session.run(None, {'input': inp})

@@ -1,7 +1,8 @@
---extra-index-url https://download.pytorch.org/whl/cu118
-torch==2.3.0
-torchvision==0.18.0
-torchaudio==2.3.0
+--extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
+torch==2.1.0.post2+cxx11.abi
+torchaudio==2.1.0.post2+cxx11.abi
+torchvision==0.16.0.post2+cxx11.abi
+intel-extension-for-pytorch==2.1.30+xpu
 
 numpy==1.26.4
 pyyaml==6.0.1
@@ -12,7 +13,7 @@ lmdb==1.4.1
 tqdm==4.66.4
 rich==13.7.1
 ffmpeg-python==0.2.0
-onnxruntime-gpu==1.18.0
+onnxruntime-openvino==1.18.0
 onnx==1.16.1
 scikit-image==0.24.0
 albumentations==1.4.10

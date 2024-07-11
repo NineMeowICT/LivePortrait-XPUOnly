@@ -6,6 +6,23 @@ Benchmark the inference speed of each module in LivePortrait.
 TODO: heavy GPT style, need to refactor
 """
 
+import torch
+try:
+    import intel_extension_for_pytorch as ipex
+    if torch.xpu.is_available():
+        from ipex_to_cuda import ipex_init
+        ipex_active, message = ipex_init()
+        print(f"IPEX Active: {ipex_active} Message: {message}")
+except Exception:
+    pass
+
+if torch.cuda.is_available():
+    if hasattr(torch.cuda, "is_xpu_hijacked") and torch.cuda.is_xpu_hijacked:
+        print("IPEX to CUDA is working!")
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
+
+
 import yaml
 import torch
 import time
@@ -18,13 +35,13 @@ def initialize_inputs(batch_size=1):
     """
     Generate random input tensors and move them to GPU
     """
-    feature_3d = torch.randn(batch_size, 32, 16, 64, 64).cuda().half()
-    kp_source = torch.randn(batch_size, 21, 3).cuda().half()
-    kp_driving = torch.randn(batch_size, 21, 3).cuda().half()
-    source_image = torch.randn(batch_size, 3, 256, 256).cuda().half()
-    generator_input = torch.randn(batch_size, 256, 64, 64).cuda().half()
-    eye_close_ratio = torch.randn(batch_size, 3).cuda().half()
-    lip_close_ratio = torch.randn(batch_size, 2).cuda().half()
+    feature_3d = torch.randn(batch_size, 32, 16, 64, 64).xpu().half()
+    kp_source = torch.randn(batch_size, 21, 3).xpu().half()
+    kp_driving = torch.randn(batch_size, 21, 3).xpu().half()
+    source_image = torch.randn(batch_size, 3, 256, 256).xpu().half()
+    generator_input = torch.randn(batch_size, 256, 64, 64).xpu().half()
+    eye_close_ratio = torch.randn(batch_size, 3).xpu().half()
+    lip_close_ratio = torch.randn(batch_size, 2).xpu().half()
     feat_stitching = concat_feat(kp_source, kp_driving).half()
     feat_eye = concat_feat(kp_source, eye_close_ratio).half()
     feat_lip = concat_feat(kp_source, lip_close_ratio).half()
@@ -47,11 +64,11 @@ def load_and_compile_models(cfg, model_config):
     """
     Load and compile models for inference
     """
-    appearance_feature_extractor = load_model(cfg.checkpoint_F, model_config, cfg.device, 'appearance_feature_extractor')
-    motion_extractor = load_model(cfg.checkpoint_M, model_config, cfg.device, 'motion_extractor')
-    warping_module = load_model(cfg.checkpoint_W, model_config, cfg.device, 'warping_module')
-    spade_generator = load_model(cfg.checkpoint_G, model_config, cfg.device, 'spade_generator')
-    stitching_retargeting_module = load_model(cfg.checkpoint_S, model_config, cfg.device, 'stitching_retargeting_module')
+    appearance_feature_extractor = load_model(cfg.checkpoint_F, model_config, "xpu", 'appearance_feature_extractor')
+    motion_extractor = load_model(cfg.checkpoint_M, model_config, "xpu", 'motion_extractor')
+    warping_module = load_model(cfg.checkpoint_W, model_config, "xpu", 'warping_module')
+    spade_generator = load_model(cfg.checkpoint_G, model_config, "xpu", 'spade_generator')
+    stitching_retargeting_module = load_model(cfg.checkpoint_S, model_config, "xpu", 'stitching_retargeting_module')
 
     models_with_params = [
         ('Appearance Feature Extractor', appearance_feature_extractor),
@@ -105,34 +122,34 @@ def measure_inference_times(compiled_models, stitching_retargeting_module, input
 
     with torch.no_grad():
         for _ in range(100):
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             overall_start = time.time()
 
             start = time.time()
             compiled_models['Appearance Feature Extractor'](inputs['source_image'])
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             times['Appearance Feature Extractor'].append(time.time() - start)
 
             start = time.time()
             compiled_models['Motion Extractor'](inputs['source_image'])
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             times['Motion Extractor'].append(time.time() - start)
 
             start = time.time()
             compiled_models['Warping Network'](inputs['feature_3d'], inputs['kp_driving'], inputs['kp_source'])
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             times['Warping Network'].append(time.time() - start)
 
             start = time.time()
             compiled_models['SPADE Decoder'](inputs['generator_input'])  # Adjust input as required
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             times['SPADE Decoder'].append(time.time() - start)
 
             start = time.time()
             stitching_retargeting_module['stitching'](inputs['feat_stitching'])
             stitching_retargeting_module['eye'](inputs['feat_eye'])
             stitching_retargeting_module['lip'](inputs['feat_lip'])
-            torch.cuda.synchronize()
+            torch.xpu.synchronize()
             times['Retargeting Models'].append(time.time() - start)
 
             overall_times.append(time.time() - overall_start)
