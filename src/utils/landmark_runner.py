@@ -33,12 +33,12 @@ class LandmarkRunner(object):
         self.dsize = kwargs.get('dsize', 224)
         self.timer = Timer()
 
-        if onnx_provider.lower() == 'openvino':
-            self.session = onnxruntime.InferenceSession(
-                ckpt_path, providers=[
-                    ('OpenVINOExecutionProvider', {'device_id': device_id})
-                ]
-            )
+        
+        self.session = onnxruntime.InferenceSession(
+            ckpt_path, providers=[
+                ('OpenVINOExecutionProvider')
+            ]
+        )
 
 
     def _run(self, inp):

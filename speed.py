@@ -79,14 +79,13 @@ def load_and_compile_models(cfg, model_config):
 
     compiled_models = {}
     for name, model in models_with_params:
-        model = model.half()
         model = torch.compile(model, mode='max-autotune')  # Optimize for inference
         model.eval()  # Switch to evaluation mode
         compiled_models[name] = model
 
     retargeting_models = ['stitching', 'eye', 'lip']
     for retarget in retargeting_models:
-        module = stitching_retargeting_module[retarget].half()
+        module = stitching_retargeting_module[retarget]
         module = torch.compile(module, mode='max-autotune')  # Optimize for inference
         module.eval()  # Switch to evaluation mode
         stitching_retargeting_module[retarget] = module
@@ -196,10 +195,12 @@ def main():
     compiled_models, stitching_retargeting_module = load_and_compile_models(cfg, model_config)
 
     # Warm up models
-    warm_up_models(compiled_models, stitching_retargeting_module, inputs)
+    with torch.xpu.amp.autocast(dtype=torch.half):
+        warm_up_models(compiled_models, stitching_retargeting_module, inputs)
 
     # Measure inference times
-    times, overall_times = measure_inference_times(compiled_models, stitching_retargeting_module, inputs)
+    with torch.xpu.amp.autocast(dtype=torch.half):
+        times, overall_times = measure_inference_times(compiled_models, stitching_retargeting_module, inputs)
 
     # Print benchmark results
     print_benchmark_results(compiled_models, stitching_retargeting_module, ['stitching', 'eye', 'lip'], times, overall_times)

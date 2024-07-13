@@ -18,6 +18,9 @@ if torch.cuda.is_available():
     if hasattr(torch.cuda, "is_xpu_hijacked") and torch.cuda.is_xpu_hijacked:
         print("IPEX to CUDA is working!")
 
+import torch._dynamo
+torch._dynamo.config.suppress_errors = True
+
 
 import tyro
 import gradio as gr

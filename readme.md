@@ -49,12 +49,16 @@ We are actively updating and improving this repository. If you find any bugs or 
 ## 🔥 Getting Started
 ### 1. Clone the code and prepare the environment
 ```bash
-git clone https://github.com/KwaiVGI/LivePortrait
+git clone https://github.com/NineMeowICT/LivePortrait-XPUOnly
 cd LivePortrait
 
 # create env using conda
 conda create -n LivePortrait python==3.9.18
 conda activate LivePortrait
+# or use python3.9 venv
+# python -m venv venv
+# source venv/bin/activate
+
 # install dependencies with pip
 pip install -r requirements.txt
 ```
@@ -65,26 +69,6 @@ Download the pretrained weights from HuggingFace:
 ```bash
 # you may need to run `git lfs install` first
 git clone https://huggingface.co/KwaiVGI/liveportrait pretrained_weights
-```
-
-Or, download all pretrained weights from [Google Drive](https://drive.google.com/drive/folders/1UtKgzKjFAOmZkhNK-OYT0caJ_w2XAnib) or [Baidu Yun](https://pan.baidu.com/s/1MGctWmNla_vZxDbEp2Dtzw?pwd=z5cn). We have packed all weights in one directory 😊. Unzip and place them in `./pretrained_weights` ensuring the directory structure is as follows:
-```text
-pretrained_weights
-├── insightface
-│   └── models
-│       └── buffalo_l
-│           ├── 2d106det.onnx
-│           └── det_10g.onnx
-└── liveportrait
-    ├── base_models
-    │   ├── appearance_feature_extractor.pth
-    │   ├── motion_extractor.pth
-    │   ├── spade_generator.pth
-    │   └── warping_module.pth
-    ├── landmark.onnx
-    └── retargeting_models
-        └── stitching_retargeting_module.pth
-```
 
 ### 3. Inference 🚀
 
@@ -115,6 +99,7 @@ python inference.py -h
 
 📕 To use your own driving video, we **recommend**:
  - Crop it to a **1:1** aspect ratio (e.g., 512x512 or 256x256 pixels), or enable auto-cropping by `--flag_crop_driving_video`.
+ - You can use ```python cv_coordinate.py``` to crop the video with a simple GUI using FFmpeg.
  - Focus on the head area, similar to the example videos.
  - Minimize shoulder movement.
  - Make sure the first frame of driving video is a frontal face with **neutral expression**.
@@ -162,6 +147,17 @@ Below are the results of inferring one frame on an RTX 4090 GPU using the native
 | Spade Generator                   |     55.37     |       212      |     7.59      |
 | Warping Module                    |     45.53     |       174      |     5.21      |
 | Stitching and Retargeting Modules |     0.23      |       2.3      |     0.31      |
+
+**Intel ARC A770 (FP16):**
+| Model                             | Parameters(M) | Model Size(MB) | Inference(ms) |
+|-----------------------------------|:-------------:|:--------------:|:-------------:|
+| Appearance Feature Extractor      |     0.84      |       3.3      |     7.79      |
+| Motion Extractor                  |     28.12     |       108      |     51.95      |
+| Spade Generator                   |     55.37     |       212      |     76.70      |
+| Warping Module                    |     45.53     |       174      |     32.71      |
+| Stitching and Retargeting Modules |     0.23      |       2.3      |     6.06      |
+
+*I think I should utilize IPEX Dynamo Backend to accelerate it.*
 
 *Note: The values for the Stitching and Retargeting Modules represent the combined parameter counts and total inference time of three sequential MLP networks.*
 
