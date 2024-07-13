@@ -13,9 +13,7 @@ from .timer import Timer
 from .rprint import rlog as log
 from .io import load_image_rgb
 from .video import VideoWriter, get_fps, change_video_fps
-
-from .XPose.app import run_unipose
-from .XPose.app import *
+from .UniPose.app import *
 def make_abs_path(fn):
     return osp.join(osp.dirname(osp.realpath(__file__)), fn)
 

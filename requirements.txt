@@ -34,4 +34,5 @@ yapf==0.32.0
 ftfy 
 regex 
 tqdm
+timm==0.9.7
 git+https://github.com/openai/CLIP.git
