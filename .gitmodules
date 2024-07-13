@@ -1,12 +1,3 @@
 [submodule "ipex_to_cuda"]
 	path = ipex_to_cuda
 	url = https://github.com/Disty0/ipex_to_cuda
-[submodule "Xpose"]
-	path = Xpose
-	url = https://github.com/IDEA-Research/X-Pose
-[submodule "src/utils/Xpose"]
-	path = src/utils/Xpose
-	url = https://github.com/IDEA-Research/X-Pose
-[submodule "src/utils/XPose"]
-	path = src/utils/XPose
-	url = https://github.com/IDEA-Research/X-Pose
