@@ -22,3 +22,16 @@ imageio-ffmpeg==0.5.1
 tyro==0.8.5
 gradio==4.37.1
 python-ffmpeg
+
+#For X-Pose
+addict==2.4.0
+ipdb==0.13.4
+pandas
+Pillow
+seaborn==0.13.0
+transformers==4.22.0
+yapf==0.32.0
+ftfy 
+regex 
+tqdm
+git+https://github.com/openai/CLIP.git

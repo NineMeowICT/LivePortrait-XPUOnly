@@ -21,7 +21,6 @@ if torch.cuda.is_available():
 import torch._dynamo
 torch._dynamo.config.suppress_errors = True
 
-
 import tyro
 import gradio as gr
 import os.path as osp
@@ -43,40 +42,28 @@ args = tyro.cli(ArgumentConfig)
 # specify configs for inference
 inference_cfg = partial_fields(InferenceConfig, args.__dict__)  # use attribute of args to initial InferenceConfig
 crop_cfg = partial_fields(CropConfig, args.__dict__)  # use attribute of args to initial CropConfig
-
 gradio_pipeline = GradioPipeline(
     inference_cfg=inference_cfg,
     crop_cfg=crop_cfg,
     args=args
 )
-
-
-def gpu_wrapped_execute_video(*args, **kwargs):
-    return gradio_pipeline.execute_video(*args, **kwargs)
-
-
-def gpu_wrapped_execute_image(*args, **kwargs):
-    return gradio_pipeline.execute_image(*args, **kwargs)
-
-
 # assets
 title_md = "assets/gradio_title.md"
 example_portrait_dir = "assets/examples/source"
 example_video_dir = "assets/examples/driving"
 data_examples = [
-    [osp.join(example_portrait_dir, "s9.jpg"), osp.join(example_video_dir, "d0.mp4"), True, True, True, False],
-    [osp.join(example_portrait_dir, "s6.jpg"), osp.join(example_video_dir, "d0.mp4"), True, True, True, False],
-    [osp.join(example_portrait_dir, "s10.jpg"), osp.join(example_video_dir, "d0.mp4"), True, True, True, False],
-    [osp.join(example_portrait_dir, "s5.jpg"), osp.join(example_video_dir, "d18.mp4"), True, True, True, False],
-    [osp.join(example_portrait_dir, "s7.jpg"), osp.join(example_video_dir, "d19.mp4"), True, True, True, False],
-    [osp.join(example_portrait_dir, "s2.jpg"), osp.join(example_video_dir, "d13.mp4"), True, True, True, True],
+    [osp.join(example_portrait_dir, "s9.jpg"), osp.join(example_video_dir, "d0.mp4"), True, True, True, True],
+    [osp.join(example_portrait_dir, "s6.jpg"), osp.join(example_video_dir, "d0.mp4"), True, True, True, True],
+    [osp.join(example_portrait_dir, "s10.jpg"), osp.join(example_video_dir, "d5.mp4"), True, True, True, True],
+    [osp.join(example_portrait_dir, "s5.jpg"), osp.join(example_video_dir, "d6.mp4"), True, True, True, True],
+    [osp.join(example_portrait_dir, "s7.jpg"), osp.join(example_video_dir, "d7.mp4"), True, True, True, True],
 ]
 #################### interface logic ####################
 
 # Define components first
 eye_retargeting_slider = gr.Slider(minimum=0, maximum=0.8, step=0.01, label="target eyes-open ratio")
 lip_retargeting_slider = gr.Slider(minimum=0, maximum=0.8, step=0.01, label="target lip-open ratio")
-retargeting_input_image = gr.Image(type="filepath")
+retargeting_input_image = gr.Image(type="numpy")
 output_image = gr.Image(type="numpy")
 output_image_paste_back = gr.Image(type="numpy")
 output_video = gr.Video()
@@ -88,39 +75,15 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
     with gr.Row():
         with gr.Accordion(open=True, label="Source Portrait"):
             image_input = gr.Image(type="filepath")
-            gr.Examples(
-                examples=[
-                    [osp.join(example_portrait_dir, "s9.jpg")],
-                    [osp.join(example_portrait_dir, "s6.jpg")],
-                    [osp.join(example_portrait_dir, "s10.jpg")],
-                    [osp.join(example_portrait_dir, "s5.jpg")],
-                    [osp.join(example_portrait_dir, "s7.jpg")],
-                    [osp.join(example_portrait_dir, "s12.jpg")],
-                ],
-                inputs=[image_input],
-                cache_examples=False,
-            )
         with gr.Accordion(open=True, label="Driving Video"):
             video_input = gr.Video()
-            gr.Examples(
-                examples=[
-                    [osp.join(example_video_dir, "d0.mp4")],
-                    [osp.join(example_video_dir, "d18.mp4")],
-                    [osp.join(example_video_dir, "d19.mp4")],
-                    [osp.join(example_video_dir, "d14.mp4")],
-                    [osp.join(example_video_dir, "d6.mp4")],
-                ],
-                inputs=[video_input],
-                cache_examples=False,
-            )
+    gr.Markdown(load_description("assets/gradio_description_animation.md"))
     with gr.Row():
-        with gr.Accordion(open=False, label="Animation Instructions and Options"):
-            gr.Markdown(load_description("assets/gradio_description_animation.md"))
+        with gr.Accordion(open=True, label="Animation Options"):
             with gr.Row():
                 flag_relative_input = gr.Checkbox(value=True, label="relative motion")
-                flag_do_crop_input = gr.Checkbox(value=True, label="do crop (source)")
+                flag_do_crop_input = gr.Checkbox(value=True, label="do crop")
                 flag_remap_input = gr.Checkbox(value=True, label="paste-back")
-                flag_crop_driving_video_input = gr.Checkbox(value=False, label="do crop (driving video)")
     with gr.Row():
         with gr.Column():
             process_button_animation = gr.Button("🚀 Animate", variant="primary")
@@ -135,28 +98,24 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 output_video_concat.render()
     with gr.Row():
         # Examples
-        gr.Markdown("## You could also choose the examples below by one click ⬇️")
+        gr.Markdown("## You could choose the examples below ⬇️")
     with gr.Row():
         gr.Examples(
             examples=data_examples,
-            fn=gpu_wrapped_execute_video,
             inputs=[
                 image_input,
                 video_input,
                 flag_relative_input,
                 flag_do_crop_input,
-                flag_remap_input,
-                flag_crop_driving_video_input
+                flag_remap_input
             ],
-            outputs=[output_image, output_image_paste_back],
-            examples_per_page=len(data_examples),
-            cache_examples=False,
+            examples_per_page=5
         )
-    gr.Markdown(load_description("assets/gradio_description_retargeting.md"), visible=True)
-    with gr.Row(visible=True):
+    gr.Markdown(load_description("assets/gradio_description_retargeting.md"))
+    with gr.Row():
         eye_retargeting_slider.render()
         lip_retargeting_slider.render()
-    with gr.Row(visible=True):
+    with gr.Row():
         process_button_retargeting = gr.Button("🚗 Retargeting", variant="primary")
         process_button_reset_retargeting = gr.ClearButton(
             [
@@ -168,22 +127,10 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
             ],
             value="🧹 Clear"
         )
-    with gr.Row(visible=True):
+    with gr.Row():
         with gr.Column():
             with gr.Accordion(open=True, label="Retargeting Input"):
                 retargeting_input_image.render()
-                gr.Examples(
-                    examples=[
-                        [osp.join(example_portrait_dir, "s9.jpg")],
-                        [osp.join(example_portrait_dir, "s6.jpg")],
-                        [osp.join(example_portrait_dir, "s10.jpg")],
-                        [osp.join(example_portrait_dir, "s5.jpg")],
-                        [osp.join(example_portrait_dir, "s7.jpg")],
-                        [osp.join(example_portrait_dir, "s12.jpg")],
-                    ],
-                    inputs=[retargeting_input_image],
-                    cache_examples=False,
-                )
         with gr.Column():
             with gr.Accordion(open=True, label="Retargeting Result"):
                 output_image.render()
@@ -192,29 +139,33 @@ with gr.Blocks(theme=gr.themes.Soft()) as demo:
                 output_image_paste_back.render()
     # binding functions for buttons
     process_button_retargeting.click(
-        # fn=gradio_pipeline.execute_image,
-        fn=gpu_wrapped_execute_image,
-        inputs=[eye_retargeting_slider, lip_retargeting_slider, retargeting_input_image, flag_do_crop_input],
+        fn=gradio_pipeline.execute_image,
+        inputs=[eye_retargeting_slider, lip_retargeting_slider],
         outputs=[output_image, output_image_paste_back],
         show_progress=True
     )
     process_button_animation.click(
-        fn=gpu_wrapped_execute_video,
+        fn=gradio_pipeline.execute_video,
         inputs=[
             image_input,
             video_input,
             flag_relative_input,
             flag_do_crop_input,
-            flag_remap_input,
-            flag_crop_driving_video_input
+            flag_remap_input
         ],
         outputs=[output_video, output_video_concat],
         show_progress=True
     )
+    image_input.change(
+        fn=gradio_pipeline.prepare_retargeting,
+        inputs=image_input,
+        outputs=[eye_retargeting_slider, lip_retargeting_slider, retargeting_input_image]
+    )
 
+##########################################################
 
 demo.launch(
+    server_name=args.server_name,
     server_port=args.server_port,
     share=args.share,
-    server_name=args.server_name
 )

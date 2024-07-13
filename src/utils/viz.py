@@ -4,7 +4,7 @@ import cv2; cv2.setNumThreads(0); cv2.ocl.setUseOpenCL(False)
 
 
 def viz_lmk(img_, vps, **kwargs):
-    """可视化点"""
+    #Visable points
     lineType = kwargs.get("lineType", cv2.LINE_8)  # cv2.LINE_AA
     img_for_viz = img_.copy()
     for pt in vps:
