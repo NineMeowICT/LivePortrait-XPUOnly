@@ -1,4 +1,5 @@
 <h2 align="center">Still WIP, since MSDA used by X-Pose doesn't have a SYCL implementation.</h2>
+<h2 align="center">Update: Sorry, I don't have enough ability to complete the porting. Any suggestions are welcomed.</h2>
 
 
 <h1 align="center">LivePortrait: Efficient Portrait Animation with Stitching and Retargeting Control</h1>
